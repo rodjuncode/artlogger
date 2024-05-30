@@ -13,6 +13,10 @@ from webdriver_manager.chrome import ChromeDriverManager
 import time
 import base64
 
+# constants
+PORT = 8000
+HISTORY_FILE = 'index'
+
 # Create the parser
 parser = argparse.ArgumentParser(description='Process a GitHub URL.')
 
@@ -58,26 +62,22 @@ chrome_options.add_argument("--headless")
 driver = webdriver.Chrome(service=webdriver_service, options=chrome_options)
 
 # Define the starting port
-port = 8000
 Handler = http.server.SimpleHTTPRequestHandler
 
 # Start the server before the loop
-httpd = socketserver.TCPServer(("", port), Handler)
-print(f"Serving at port {port}")
+httpd = socketserver.TCPServer(("", PORT), Handler)
+print(f"Serving at port {PORT}")
 httpd_thread = threading.Thread(target=httpd.serve_forever)
 httpd_thread.start()
 
 # Create a markdown file in the 'log' directory
-with open(os.path.join(log_dir, 'process_history.md'), 'w') as f:
+with open(os.path.join(log_dir, HISTORY_FILE + '.html'), 'w') as f:
     # Write the title to the markdown file
-    f.write("# Process History\n")
+    f.write("<h1>Process History</h1>\n")
 
 for commit in reversed(commits):
     # Checkout the commit
     repo.git.checkout(commit)
-
-    # Print the current working directory
-    print(f"Current working directory: {os.getcwd()}")
 
     # Check if there are any remotes
     if repo.remotes:
@@ -89,14 +89,15 @@ for commit in reversed(commits):
         remote_url = False
 
     # Append to the markdown file in the 'log' directory
-    with open(os.path.join(log_dir, 'process_history.md'), 'a') as f:
+    with open(os.path.join(log_dir, HISTORY_FILE + '.html'), 'a') as f:
+        f.write(f"<div class='commit'>\n")
         # Write the commit message as a subtitle
-        f.write(f"## {commit.message}\n")
+        f.write(f"<h2>{commit.message}</h2>\n")
 
         # Check if the remote URL exists
         if remote_url:
             # Write the commit hash as a link
-            f.write(f"[{commit.hexsha}]({remote_url}/commit/{commit.hexsha})\n\n")
+                f.write(f'<a href="{remote_url}/commit/{commit.hexsha}">Commit hash</a>\n')
             
 
     # Check if the 'repo' directory exists before trying to change to it
@@ -107,7 +108,7 @@ for commit in reversed(commits):
         continue
 
     # Navigate to the page
-    driver.get(f'http://localhost:{port}')
+    driver.get(f'http://localhost:{PORT}')
 
     # Wait for the page to load
     time.sleep(args.wait)
@@ -126,14 +127,17 @@ for commit in reversed(commits):
             f.write(canvas_png)
 
         # Append the PNG to the markdown file
-        with open(os.path.join(log_dir, 'process_history.md'), 'a') as f:
-            f.write(f"![{commit.hexsha}]({commit.hexsha}.png)\n")            
+        with open(os.path.join(log_dir, HISTORY_FILE + '.html'), 'a') as f:
+            f.write(f'<img src="{commit.hexsha}.png" alt="{commit.hexsha}">\n')            
     else:
         print(f"No canvas element found for commit {commit.hexsha}")
 
         # Append a message indicating that no visualization is available to the markdown file
-        with open(os.path.join(log_dir, 'process_history.md'), 'a') as f:
-            f.write("No available visualization for this commit\n")
+        with open(os.path.join(log_dir, HISTORY_FILE + '.html'), 'a') as f:
+            f.write("<p>No available visualization for this commit</p>\n")
+
+    with open(os.path.join(log_dir, HISTORY_FILE + '.html'), 'a') as f:
+        f.write(f"</div>\n")
 
 # Shutdown the server after the loop
 httpd.shutdown()
