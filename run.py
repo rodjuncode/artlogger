@@ -19,6 +19,7 @@ parser = argparse.ArgumentParser(description='Process a GitHub URL.')
 # Add the arguments
 parser.add_argument('URL', metavar='URL', type=str, help='The GitHub URL to process')
 parser.add_argument('--branch', metavar='branch', type=str, default='main', help='The branch to checkout')
+parser.add_argument('--wait', metavar='wait', type=int, default=5, help='The number of seconds to wait for the page to load')
 
 # Parse the arguments
 args = parser.parse_args()
@@ -109,7 +110,7 @@ for commit in reversed(commits):
     driver.get(f'http://localhost:{port}')
 
     # Wait for the page to load
-    time.sleep(10)
+    time.sleep(args.wait)
 
     # Check if there is a canvas element on the page
     canvas_elements = driver.find_elements(By.TAG_NAME, 'canvas')
