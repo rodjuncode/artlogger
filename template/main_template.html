@@ -3,18 +3,33 @@
 <head>
     <title>Process History</title>
     <style>
-        /* .generation {
-            width: 100%;
-            clear: both;
-        } */
+        .generations {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+        }
+
+        .generation {
+            flex: 1 0 auto;
+            margin: 10px;
+        }
 
         .slideshow li {
         display: none;
-    }
+        }
 
-    .slideshow li.active {
-        display: block;
-    }
+        .slideshow li.active {
+            display: block;
+        }
+
+        .slideshow img {
+            width: 250px;
+        }
+
+        .no-generation {
+            color: #999;
+        }
+        
     </style>
 </head>
 <body>
@@ -43,7 +58,7 @@
             resetSlide();
         
             slideshow.addEventListener('mouseenter', function() {
-                intervalId = setInterval(nextSlide, 500);
+                intervalId = setInterval(nextSlide, 100);
             });
         
             slideshow.addEventListener('mouseleave', function() {
