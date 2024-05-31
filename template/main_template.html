@@ -1,0 +1,11 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Process History</title>
+</head>
+<body>
+    {% for commit in commits %}
+        {% include 'commit_template.html' %}
+    {% endfor %}
+</body>
+</html>

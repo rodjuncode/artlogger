@@ -1,0 +1,9 @@
+<div>
+    <h2>{{ commit.message }}</h2>
+    <a href="{{ commit.url }}">Check commit at GitHub.</a>
+    {% if commit.png_exists %}
+        <img src="{{ commit.png_path }}" alt="{{ commit.hexsha }}">
+    {% else %}
+        <p>No available visualization for this commit</p>
+    {% endif %}
+</div>
