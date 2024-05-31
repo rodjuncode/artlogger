@@ -45,6 +45,13 @@ parser.add_argument(
     default=1,
     help="The number of generations to make",
 )
+parser.add_argument(
+    "--slides",
+    metavar="slides",
+    type=int,
+    default=1,
+    help="The number of slides per generation",
+)
 
 
 # Parse the arguments
@@ -133,40 +140,74 @@ for commit in reversed(commits):
     commit_dir = os.path.join(log_dir, commit.hexsha)
     os.makedirs(commit_dir, exist_ok=True)
 
-    for i in range(args.generate):
+    for g in range(args.generate):
 
         generation = {
-            "number": i+1,
+            "number": g+1,
+            "slides" : [],
             "png_exists" : False,
         }
 
         # Navigate to the page
         driver.get(f"http://localhost:{PORT}")
 
-        # Wait for the page to load
-        time.sleep(args.wait)
+        for s in range(args.slides):
 
-        # Check if there is a canvas element on the page
-        canvas_elements = driver.find_elements(By.TAG_NAME, "canvas")
-        if canvas_elements:
-            # Get the canvas as a PNG
-            canvas = canvas_elements[0]
-            canvas_base64 = driver.execute_script(
-                "return arguments[0].toDataURL('image/png').substring(21);", canvas
-            )
-            canvas_png = base64.b64decode(canvas_base64)
+            # Wait for the page to load
+            time.sleep(args.wait)
 
-            # Save the PNG
-            png_path = os.path.join(commit_dir, f'{i+1}.png')
-            with open(png_path , "wb") as f:
-                f.write(canvas_png)
+            # Check if there is a canvas element on the page
+            canvas_elements = driver.find_elements(By.TAG_NAME, "canvas")
+            if canvas_elements:
+                # Get the canvas as a PNG
+                canvas = canvas_elements[0]
+                canvas_base64 = driver.execute_script(
+                    "return arguments[0].toDataURL('image/png').substring(21);", canvas
+                )
+                canvas_png = base64.b64decode(canvas_base64)
 
-            # Add the PNG path to the generation data
-            generation["png_exists"] = True
-            generation["png_path"] = f"{commit.hexsha}/{i+1}.png"
+                # Save the PNG
+                png_path = os.path.join(commit_dir, f'{g+1}_{s+1}.png')
+                with open(png_path , "wb") as f:
+                    f.write(canvas_png)
 
-        else:
-            print(f"No canvas element found for commit {commit.hexsha}")
+                # Add the PNG path to the generation data
+                slide = {
+                    "number": s+1,
+                    "png_path": f"{commit.hexsha}/{g+1}_{s+1}.png"
+                }
+                generation["slides"].append(slide)
+
+            else:
+                print(f"No canvas element found for commit {commit.hexsha}")
+
+        # # Navigate to the page
+        # driver.get(f"http://localhost:{PORT}")
+
+        # # Wait for the page to load
+        # time.sleep(args.wait)
+
+        # # Check if there is a canvas element on the page
+        # canvas_elements = driver.find_elements(By.TAG_NAME, "canvas")
+        # if canvas_elements:
+        #     # Get the canvas as a PNG
+        #     canvas = canvas_elements[0]
+        #     canvas_base64 = driver.execute_script(
+        #         "return arguments[0].toDataURL('image/png').substring(21);", canvas
+        #     )
+        #     canvas_png = base64.b64decode(canvas_base64)
+
+        #     # Save the PNG
+        #     png_path = os.path.join(commit_dir, f'{i+1}.png')
+        #     with open(png_path , "wb") as f:
+        #         f.write(canvas_png)
+
+        #     # Add the PNG path to the generation data
+        #     generation["png_exists"] = True
+        #     generation["png_path"] = f"{commit.hexsha}/{i+1}.png"
+
+        # else:
+        #     print(f"No canvas element found for commit {commit.hexsha}")
 
         # Add the generation data to the commit data
         commit_html_data["generations"].append(generation)

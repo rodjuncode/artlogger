@@ -2,13 +2,19 @@
     <h2>{{ commit.message }}</h2>
     <a href="{{ commit.url }}">Visit commit at GitHub.</a>
     {% for generation in commit.generations %}
-        <div class="generation no-generation">
-        {% if generation.png_exists %}
+        <div class="generation">
             <h3>Generation {{ generation.number }}</h3>
-            <img src="{{ generation.png_path }}" alt="Generation {{ generation.number }}">
-        {% else %}
-            <p class="no-generation">No available visualization for generation {{ generation.number }}</p>
-        {% endif %}
+            {% if generation.slides %}
+                <ol class="slideshow">
+                    {% for slide in generation.slides %}
+                        <li class="slide">
+                            <img src="{{ slide.png_path }}" alt="Slide {{ slide.number }}">
+                        </li>
+                    {% endfor %}
+                </ol>
+            {% else %}
+                <p class="no-generation">No available visualization for generation {{ generation.number }}</p>
+            {% endif %}
         </div>
     {% endfor %}
 </div>
