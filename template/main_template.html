@@ -3,26 +3,18 @@
 <head>
     <title>Process History</title>
     <style>
-        .generation {
+        /* .generation {
             width: 100%;
             clear: both;
-        }
-
-        .slideshow {
-            position: relative;
-            overflow: hidden;
-            margin: 0 auto; /* Center the slideshow */
-        }
+        } */
 
         .slideshow li {
-            list-style: none;
-            width: 100%;
-            display: none; /* Hide the non-active slides */
-        }
+        display: none;
+    }
 
-        .slideshow li.active {
-            display: block; /* Show the active slide */
-        }
+    .slideshow li.active {
+        display: block;
+    }
     </style>
 </head>
 <body>
@@ -30,37 +22,31 @@
         {% include 'commit_template.html' %}
     {% endfor %}
     <script>
-        document.querySelectorAll('.slideshow img').forEach(function(img) {
-            var slideshow = img.closest('.slideshow');
+        document.querySelectorAll('ol.slideshow').forEach(function(slideshow) {
             var slides = Array.from(slideshow.querySelectorAll('li'));
-            var index = slides.findIndex(slide => slide.contains(img));
+            var index = 0;
             var intervalId;
-
-            // Set the first slide as the active slide
-            if (slides.length > 0) {
-                slides[0].classList.add('active');
-            }
-
+        
             function nextSlide() {
                 slides[index].classList.remove('active');
                 index = (index + 1) % slides.length;
                 slides[index].classList.add('active');
-                console.log('Next slide:', index);
             }
-
+        
             function resetSlide() {
                 slides[index].classList.remove('active');
                 index = 0;
-                slides[index].classList.add('active');
-                console.log('Reset slide:', index);
+                slides[0].classList.add('active');
             }
-
-            img.addEventListener('mouseover', function() {
-                nextSlide();
-                intervalId = setInterval(nextSlide, 500); // Change slide every 2 seconds
+        
+            // Add the active class to the first slide
+            resetSlide();
+        
+            slideshow.addEventListener('mouseenter', function() {
+                intervalId = setInterval(nextSlide, 500);
             });
-
-            img.addEventListener('mouseout', function() {
+        
+            slideshow.addEventListener('mouseleave', function() {
                 clearInterval(intervalId);
                 resetSlide();
             });
