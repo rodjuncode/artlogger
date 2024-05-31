@@ -1,9 +1,14 @@
-<div>
+<div class="commit">
     <h2>{{ commit.message }}</h2>
-    <a href="{{ commit.url }}">Check commit at GitHub.</a>
-    {% if commit.png_exists %}
-        <img src="{{ commit.png_path }}" alt="{{ commit.hexsha }}">
-    {% else %}
-        <p>No available visualization for this commit</p>
-    {% endif %}
+    <a href="{{ commit.url }}">Visit commit at GitHub.</a>
+    {% for generation in commit.generations %}
+        {% if generation.png_exists %}
+            <div class="generation">
+                <h3>Generation {{ generation.number }}</h3>
+                <img src="{{ generation.png_path }}" alt="Generation {{ generation.number }}">
+            </div>
+        {% else %}
+            <p>No available visualization for generation {{ generation.number }}</p>
+        {% endif %}
+    {% endfor %}
 </div>

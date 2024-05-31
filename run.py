@@ -38,6 +38,14 @@ parser.add_argument(
     default=5,
     help="The number of seconds to wait for the page to load",
 )
+parser.add_argument(
+    "--generate",
+    metavar="generate",
+    type=int,
+    default=1,
+    help="The number of generations to make",
+)
+
 
 # Parse the arguments
 args = parser.parse_args()
@@ -104,6 +112,7 @@ main_template = env.get_template("main_template.html")
 # Create a list to store the commit data
 commits_html = []
 
+# Loop through the commits
 for commit in reversed(commits):
 
     print(f"Processing commit {commit.hexsha}...")
@@ -115,46 +124,58 @@ for commit in reversed(commits):
         "author": commit.author,
         "committed_date": commit.committed_date,
         "url": f"{remote_url}/commit/{commit.hexsha}",
-        "png_exists": False,
+        "generations" : []
     }
 
     # Checkout the commit
     repo.git.checkout(commit)
 
-    # Navigate to the page
-    driver.get(f"http://localhost:{PORT}")
+    commit_dir = os.path.join(log_dir, commit.hexsha)
+    os.makedirs(commit_dir, exist_ok=True)
 
-    # Wait for the page to load
-    time.sleep(args.wait)
+    for i in range(args.generate):
 
-    # Check if there is a canvas element on the page
-    canvas_elements = driver.find_elements(By.TAG_NAME, "canvas")
-    if canvas_elements:
-        # Get the canvas as a PNG
-        canvas = canvas_elements[0]
-        canvas_base64 = driver.execute_script(
-            "return arguments[0].toDataURL('image/png').substring(21);", canvas
-        )
-        canvas_png = base64.b64decode(canvas_base64)
+        generation = {
+            "number": i+1,
+            "png_exists" : False,
+        }
 
-        # Save the PNG to the 'log' directory with the commit hash as the filename
-        png_path = os.path.join(log_dir, f"{commit.hexsha}.png")
-        with open(os.path.join(log_dir, f"{commit.hexsha}.png"), "wb") as f:
-            f.write(canvas_png)
+        # Navigate to the page
+        driver.get(f"http://localhost:{PORT}")
 
-        # Append the PNG to the markdown file
-        with open(os.path.join(log_dir, HISTORY_FILE + ".html"), "a") as f:
-            f.write(f'<img src="{commit.hexsha}.png" alt="{commit.hexsha}">\n')
+        # Wait for the page to load
+        time.sleep(args.wait)
 
-        # Add the PNG path to the commit data
-        if os.path.exists(png_path):
-            commit_html_data["png_exists"] = True
-            commit_html_data["png_path"] = f"{commit.hexsha}.png"
-    else:
-        print(f"No canvas element found for commit {commit.hexsha}")
+        # Check if there is a canvas element on the page
+        canvas_elements = driver.find_elements(By.TAG_NAME, "canvas")
+        if canvas_elements:
+            # Get the canvas as a PNG
+            canvas = canvas_elements[0]
+            canvas_base64 = driver.execute_script(
+                "return arguments[0].toDataURL('image/png').substring(21);", canvas
+            )
+            canvas_png = base64.b64decode(canvas_base64)
+
+            # Save the PNG
+            png_path = os.path.join(commit_dir, f'{i+1}.png')
+            with open(png_path , "wb") as f:
+                f.write(canvas_png)
+
+            # Add the PNG path to the generation data
+            generation["png_exists"] = True
+            generation["png_path"] = f"{commit.hexsha}/{i+1}.png"
+
+        else:
+            print(f"No canvas element found for commit {commit.hexsha}")
+
+        # Add the generation data to the commit data
+        commit_html_data["generations"].append(generation)
 
     # Append the commit data to the list
     commits_html.append(commit_html_data)
+
+    # Print the commit data     
+    print(commit_html_data)
 
 html = main_template.render(commits=commits_html)
 
